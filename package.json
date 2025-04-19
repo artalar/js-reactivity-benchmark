@@ -15,6 +15,7 @@
   "dependencies": {
     "@amadeus-it-group/tansu": "^2.0.0",
     "@angular/core": "19.0.6",
+    "@artalar/act": "^3.2.1",
     "@preact/signals": "^2.0.0",
     "@reactively/core": "^0.0.8",
     "@vue/reactivity": "^3.5.13",

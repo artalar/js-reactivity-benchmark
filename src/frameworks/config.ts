@@ -1,7 +1,5 @@
 import { TestConfig, FrameworkInfo } from "./util/frameworkTypes";
 
-import { actFramework } from "./frameworks/act";
-import { alphaFramework } from "./frameworks/alpha";
 import { alienFramework } from "./frameworks/alienSignals";
 import { angularFramework } from "./frameworks/angularSignals";
 import { mobxFramework } from "./frameworks/mobx";
@@ -21,24 +19,22 @@ import { tansuFramework } from "./frameworks/tansu";
 // import { valtioFramework } from "./frameworks/valtio";
 
 export const frameworkInfo: FrameworkInfo[] = [
-  { framework: alphaFramework, testPullCounts: true },
   { framework: alienFramework, testPullCounts: true },
-  { framework: molWireFramework, testPullCounts: true },
-  { framework: solidFramework },
   { framework: preactSignalFramework, testPullCounts: true },
-  // { framework: actFramework, testPullCounts: true },
-  // { framework: svelteFramework, testPullCounts: true },
-  // { framework: tc39SignalsProposalStage0, testPullCounts: true },
-  // { framework: reactivelyFramework, testPullCounts: true },
-  // { framework: sFramework },
-  // { framework: tansuFramework, testPullCounts: true },
-  // { framework: angularFramework, testPullCounts: true },
-  // { framework: obyFramework, testPullCounts: true },
-  // { framework: signiaFramework, testPullCounts: true },
-  // { framework: usignalFramework, testPullCounts: true },
-  // { framework: vueReactivityFramework, testPullCounts: true },
+  { framework: svelteFramework, testPullCounts: true },
+  { framework: tc39SignalsProposalStage0, testPullCounts: true },
+  { framework: reactivelyFramework, testPullCounts: true },
+  { framework: sFramework },
+  { framework: tansuFramework, testPullCounts: true },
+  { framework: angularFramework, testPullCounts: true },
+  { framework: molWireFramework, testPullCounts: true },
+  { framework: obyFramework, testPullCounts: true },
+  { framework: signiaFramework, testPullCounts: true },
+  { framework: solidFramework },
+  { framework: usignalFramework, testPullCounts: true },
+  { framework: vueReactivityFramework, testPullCounts: true },
   // NOTE: MobX currently hangs on some of the `dynamic` tests and `cellx` tests, so disable it if you want to run them. (https://github.com/mobxjs/mobx/issues/3926)
-  // { framework: mobxFramework, testPullCounts: false },
+  { framework: mobxFramework, testPullCounts: false },
 
   // --- Disabled frameworks ---
   // NOTE: the compostate adapter is currently broken and unused.
