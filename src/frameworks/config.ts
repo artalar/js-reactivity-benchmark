@@ -7,6 +7,7 @@ import { tc39SignalsProposalStage0 } from "./frameworks/tc39-proposal-signals-st
 import { molWireFramework } from "./frameworks/molWire";
 import { obyFramework } from "./frameworks/oby";
 import { preactSignalFramework } from "./frameworks/preactSignals";
+import { reatomJsxFramework } from "./frameworks/reatom";
 import { reactivelyFramework } from "./frameworks/reactively";
 import { signiaFramework } from "./frameworks/signia";
 import { solidFramework } from "./frameworks/solid";
@@ -24,6 +25,7 @@ export const frameworkInfo: FrameworkInfo[] = [
   { framework: svelteFramework, testPullCounts: true },
   { framework: tc39SignalsProposalStage0, testPullCounts: true },
   { framework: reactivelyFramework, testPullCounts: true },
+  { framework: reatomJsxFramework, testPullCounts: true },
   { framework: sFramework },
   { framework: tansuFramework, testPullCounts: true },
   { framework: angularFramework, testPullCounts: true },

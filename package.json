@@ -18,6 +18,8 @@
     "@artalar/act": "^3.2.1",
     "@preact/signals": "^2.0.0",
     "@reactively/core": "^0.0.8",
+    "@reatom/core": "^1000.0.0-alpha.66",
+    "@reatom/jsx": "^1000.0.0-alpha.65",
     "@vue/reactivity": "^3.5.13",
     "alien-signals": "1.0.0-alpha.1",
     "compostate": "0.6.0-alpha.1",
