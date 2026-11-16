@@ -6,13 +6,13 @@ import { mux } from "./kairo/mux";
 import { repeatedObservers } from "./kairo/repeated";
 import { triangle } from "./kairo/triangle";
 import { unstable } from "./kairo/unstable";
-import { nextTick } from "../util/asyncUtil";
+import { collectGarbage, nextTick } from "../util/asyncUtil";
 import { fastestTest } from "../util/benchRepeat";
 import { PerfResultCallback } from "../util/perfLogging";
 import { FrameworkInfo } from "../util/frameworkTypes";
 import { mol } from "./kairo/molBench";
 
-const cases = [
+export const kairoCases = [
   { name: "avoidablePropagation", fn: avoidablePropagation },
   { name: "broadPropagation", fn: broadPropagation },
   { name: "deepPropagation", fn: deepPropagation },
@@ -27,6 +27,7 @@ const cases = [
 export async function kairoBench(
   frameworkInfo: FrameworkInfo[],
   logPerfResult: PerfResultCallback,
+  cases = kairoCases,
 ) {
   // warmup
   for (const c of cases) {
@@ -43,7 +44,7 @@ export async function kairoBench(
     }
   }
 
-  if (globalThis.gc) (globalThis.gc!(), globalThis.gc!());
+  collectGarbage();
   await nextTick();
 
   // actual benchmark
@@ -61,19 +62,20 @@ export async function kairoBench(
       iter();
       await nextTick();
 
-      const { time } = await fastestTest(10, () => {
+      const { time, samples } = await fastestTest(10, () => {
         for (let i = 0; i < 500; i++) {
           iter();
         }
       });
 
       framework.cleanup();
-      if (globalThis.gc) (gc!(), gc!());
+      collectGarbage();
 
       logPerfResult({
         framework: framework.name,
         test: c.name,
         time,
+        samples,
       });
     }
   }

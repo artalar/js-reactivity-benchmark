@@ -2,9 +2,10 @@
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ESNext", "DOM"],
-    "types": ["@types/node"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["@types/node", "../core/src/frameworks/solid-types.d.ts"],
     "noEmit": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,

@@ -1,25 +1,142 @@
 # JS Reactivity Benchmark
 
+Compare JavaScript reactivity libraries across source creation, propagation,
+CellX graphs and configurable dynamic dependency graphs.
+
+Requires Node.js 24+ and pnpm 10. Reatom uses the published `@reatom/core`
+package from npm. See [Reatom notes](docs/REATOM.md) for adapter lifecycle and
+profiling details.
+
+```sh
+pnpm install
+pnpm bench
 ```
-$ pnpm bench
+
+In a terminal, the command opens a keyboard wizard: choose libraries, choose
+benchmarks, select a measurement mode, then review and start. The previous
+selection is restored. Reports are saved even when individual tests fail.
+
+| Key                      | Action                                                       |
+| ------------------------ | ------------------------------------------------------------ |
+| ↑ / ↓, Home / End        | Move through choices                                         |
+| Space                    | Toggle a checkbox                                            |
+| Type / Backspace         | Search / edit search                                         |
+| Ctrl+A / Ctrl+D / Ctrl+I | Select / clear / invert visible matches                      |
+| Ctrl+G                   | Toggle the focused benchmark group within visible matches    |
+| Enter                    | Continue or choose an action                                 |
+| Esc                      | Go back; cancel from the first step                          |
+| Ctrl+C                   | Cancel selection, or stop execution and save partial results |
+
+Hidden matches keep their selection. An empty selection cannot be submitted.
+No mouse is needed.
+
+## Run from the command line
+
+```sh
+pnpm bench --list
+pnpm bench --framework reatom --framework alien --test diamond
+pnpm bench --mode quick --jobs 2 --timeout 60
+pnpm bench --framework alien --test diamond --save-profile propagation
+pnpm bench --profile propagation --open
+pnpm bench --profiles
+pnpm bench --ci --framework alien --test diamond
+pnpm bench --baseline alien --compare results/previous-run --detailed
+pnpm bench --help
 ```
 
-## Features
+Library and test filters accept case-insensitive fragments, prefer exact matches,
+and can be repeated. Every run prints a command that reproduces its selection and
+measurement settings. `pnpm run run` remains an alias for `pnpm bench`.
 
-- Configurable dependency graph: graph shape, density, read rate are all adjustable.
-- Easily add new benchmarks and frameworks
-- Supports dynamic reactive nodes
-- Framework agnostic. Simple API to test new reactive frameworks.
-- Uses v8 intrinsics to warmup and cleanup
-- Tracks garbage collection overhead per test
-- Outputs a csv file for easy integration with other tools.
+**Compare mode is the default:** one library process at a time, with independent
+warmup. **Quick mode** runs libraries concurrently, up to the available CPU count;
+use it to check correctness quickly. Processes share CPU and memory, so timings
+from quick mode should be interpreted accordingly. `--jobs 2` implies quick mode
+unless a mode is explicit. Explicit compare mode requires one job.
 
-Current reactivity benchmarks ([S.js](https://github.com/adamhaile/S/blob/master/bench/bench.js), [CellX](https://github.com/Riim/cellx/blob/master/perf/perf.html)) are focused on creation time, and update time for a static graph. Additionally, existing benchmarks aren't very configurable, and don't test for dynamic dependencies. We've created a new benchmark that allows library authors to compare their frameworks against each other, and against the existing benchmarks, as well as against a new configurable benchmark with dynamically changing sources.
+The timeout applies to each test, including warmup, and to worker startup or
+transitions. A crash or timeout preserves completed results and restarts the
+remaining tests in a fresh process. Validation failures and exceptions are
+attributed to the individual test. Failed tests, crashes and timeouts produce a
+nonzero exit code; interruption produces exit code 130.
 
-We're also working on enabling consistent logging and efficient tracking of GC time across all benchmarks.
+### Saved selection and profiles
 
-The frameworks are all plenty fast for typical applications. The charts report the run time of the test in milliseconds on an M1 laptop, and are made using [Tableau](https://public.tableau.com/). Typical applications will do much more work than a framework benchmark, and at these speeds the frameworks are unlikely to bottleneck overall performance.
+Interactive selections are saved in `.benchmark-selection.json`, ignored by Git.
+They include libraries, benchmarks, mode, jobs and timeout. `--save-profile NAME`
+saves a named configuration; `--profile NAME` loads one. `--all` resets the last
+selection to the entire catalog and preserves named profiles.
 
-That said, there's learning here to improve performance of all the frameworks.
+Explicit flags are temporary unless `--save-profile` is supplied. This differs
+from the earlier runner, where `--framework` automatically changed preferences.
+Noninteractive runs can reuse the last local selection. Use `--ci` to ignore
+local preferences and never prompt; combine it with explicit filters for a
+repeatable CI subset. Without filters, `--ci` selects the entire catalog.
 
-<table style="width: 1100px; font-family: sans-serif; font-size: 12px;"><colgroup><col style="width: 200px;"><col style="width: 100px;"><col style="width: 800px;"></colgroup><tbody><tr><td colspan="3" style="display: none;">000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</td></tr><tr><td rowspan="10">avoidablePropagation</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 41px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 137px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 62px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 96px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 139px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 144px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 513px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 176px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 128px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 537px; height: 20px;"></td></tr><tr><td rowspan="10">broadPropagation</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 98px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 301px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 124px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 139px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 157px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 312px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 306px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 321px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 185px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 367px; height: 20px;"></td></tr><tr><td rowspan="10">deepPropagation</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 43px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 103px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 61px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 79px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 50px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 123px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 143px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 117px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 84px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 167px; height: 20px;"></td></tr><tr><td rowspan="10">diamond</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 56px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 208px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 82px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 90px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 107px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 199px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 365px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 174px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 124px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 355px; height: 20px;"></td></tr><tr><td rowspan="10">mux</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 94px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 315px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 110px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 111px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 167px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 185px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 174px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 226px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 188px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 229px; height: 20px;"></td></tr><tr><td rowspan="10">repeatedObservers</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 7px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 54px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 10px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 22px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 47px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 60px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 40px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 49px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 18px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 51px; height: 20px;"></td></tr><tr><td rowspan="10">triangle</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 28px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 92px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 32px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 31px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 37px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 80px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 90px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 58px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 42px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 104px; height: 20px;"></td></tr><tr><td rowspan="10">unstable</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 18px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 225px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 23px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 55px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 59px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 82px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 75px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 90px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 29px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 109px; height: 20px;"></td></tr><tr><td rowspan="10">molBench</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 215px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 232px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 217px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 219px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 347px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 268px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 225px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 226px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 475px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 227px; height: 20px;"></td></tr><tr><td rowspan="10">createSignals</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 0px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 7px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 2px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 11px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 2px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 3px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 1px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 3px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 2px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 6px; height: 20px;"></td></tr><tr><td rowspan="10">createComputations</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 39px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 351px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 27px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 94px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 40px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 66px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 57px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 160px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 54px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 102px; height: 20px;"></td></tr><tr><td rowspan="10">updateSignals</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 157px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 628px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 202px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 199px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 266px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 451px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 621px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 800px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 260px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 691px; height: 20px;"></td></tr><tr><td rowspan="10">cellx1000</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 5px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 15px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 7px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 9px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 11px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 15px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 14px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 15px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 14px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 13px; height: 20px;"></td></tr><tr><td rowspan="10">2-10x5 - lazy80%</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 129px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 420px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 151px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 142px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 338px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 655px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 439px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 259px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 193px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 476px; height: 20px;"></td></tr><tr><td rowspan="10">6-10x10 - dyn25% - lazy80%</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 97px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 258px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 104px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 87px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 137px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 234px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 134px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 137px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 143px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 232px; height: 20px;"></td></tr><tr><td rowspan="10">4-1000x12 - dyn5%</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 194px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 614px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 259px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 179px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 223px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 391px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 245px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 332px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 317px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 410px; height: 20px;"></td></tr><tr><td rowspan="10">25-1000x5</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 255px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 698px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 295px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 202px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 327px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 503px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 258px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 335px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 387px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 497px; height: 20px;"></td></tr><tr><td rowspan="10">3-5x500</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 60px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 173px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 73px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 63px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 75px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 132px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 101px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 107px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 102px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 148px; height: 20px;"></td></tr><tr><td rowspan="10">6-100x15 - dyn50%</td><td>Alien Signals</td><td><img src="pngs/fb2c36.png" style="width: 119px; height: 20px;"></td></tr><tr><td>Angular Signals</td><td><img src="pngs/ff6900.png" style="width: 290px; height: 20px;"></td></tr><tr><td>Preact Signals</td><td><img src="pngs/fd9a00.png" style="width: 140px; height: 20px;"></td></tr><tr><td>Reactively</td><td><img src="pngs/efb100.png" style="width: 108px; height: 20px;"></td></tr><tr><td>s-js</td><td><img src="pngs/7ccf00.png" style="width: 155px; height: 20px;"></td></tr><tr><td>SolidJS</td><td><img src="pngs/00c951.png" style="width: 233px; height: 20px;"></td></tr><tr><td>Svelte v5</td><td><img src="pngs/00bc7d.png" style="width: 152px; height: 20px;"></td></tr><tr><td>amadeus-it-group/tansu</td><td><img src="pngs/00bba7.png" style="width: 171px; height: 20px;"></td></tr><tr><td>Vue</td><td><img src="pngs/00b8db.png" style="width: 171px; height: 20px;"></td></tr><tr><td>x-reactivity</td><td><img src="pngs/00a6f4.png" style="width: 252px; height: 20px;"></td></tr></tbody></table>
+Removed saved entries are reported and omitted. If none remain, the runner
+reports the problem and restores the full catalog. A malformed preferences file
+has a recovery message; `--all` resets it and `--ci` ignores it.
+
+## Read and share results
+
+Each run creates `results/<timestamp>/` (override with `--output PATH`):
+
+| File            | Purpose                                                        |
+| --------------- | -------------------------------------------------------------- |
+| `report.html`   | Standalone interactive report, opens directly without a server |
+| `report.json`   | Results, individual measurements, diagnostics and run metadata |
+| `results.csv`   | Every library/test pair, status, timing and relative values    |
+| `comparison.md` | Table ready to paste into an issue or pull request             |
+
+The HTML report includes sorted bar charts, a matrix with a color scale, group
+summaries, library visibility controls, baseline selection, time/ratio/percentage
+views, diagnostics, measurement spread and metadata. Filters work with both
+charts and the matrix. Every control is keyboard accessible; a light theme is
+available. Exports from the HTML report reflect visible filters, except JSON,
+which retains the full run.
+
+A ratio of **1.20× means 20% more time** than the baseline. Lower time is better.
+Each test has its own bar scale. Failed or missing results are excluded from
+numerical comparisons. Group summaries use geometric means of ratios over a
+shared set of valid, positive timings and show their coverage. Sample statistics
+describe individual repetitions; they do not replace the benchmark's aggregation.
+
+Load a previous `report.json` in the report, or pass `--compare PATH` to the CLI.
+The report checks the environment and measurement metadata before displaying
+historical percentages. Incompatible and legacy reports require an explicit
+acknowledgment in the HTML report. Version changes are retained for inspection;
+comparing library versions is an intended workflow.
+
+## Browser benchmarks
+
+```sh
+pnpm dev
+```
+
+Open the URL printed by Vite. Choose libraries and benchmarks, filter the lists,
+select groups, and run. Each library runs in a separate Web Worker so the page
+remains responsive. Stop keeps completed results; crashes and timeouts allow
+remaining tests to continue in a fresh worker. Browser profiles are stored in
+local storage separately from CLI profiles. Save the HTML report to keep and
+share results. Browser and Node results carry different environment metadata.
+
+## Development
+
+```sh
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm format:check
+```
+
+`pnpm test` runs both core and Node suites even when one fails. The terminal
+keyboard regression test uses Python 3 and a pseudo terminal on Unix; it is
+skipped on Windows. Adapter correctness tests can expose semantic differences in
+libraries independently of runner and report tests.
+
+- [Adding a library or benchmark](docs/CONTRIBUTING.md)
+- [Measurement methods and result format](docs/MEASUREMENT.md)
+- [Historical published results](docs/legacy-results.md)
+
+These microbenchmarks measure specific graph workloads. Typical applications
+also perform rendering, I/O and other work; interpret results in that context.

@@ -5,7 +5,7 @@ import { TimingResult } from "./perfTests";
 export async function fastestTest<T>(
   times: number,
   fn: () => T,
-): Promise<TimingResult<T>> {
+): Promise<TimingResult<T> & { samples: number[] }> {
   const results: TimingResult<T>[] = [];
   for (let i = 0; i < times; i++) {
     await nextTick();
@@ -14,7 +14,7 @@ export async function fastestTest<T>(
   }
   const fastest = results.reduce((a, b) => (a.time < b.time ? a : b));
 
-  return fastest;
+  return { ...fastest, samples: results.map((result) => result.time) };
 }
 
 export interface TimedResult<T> {

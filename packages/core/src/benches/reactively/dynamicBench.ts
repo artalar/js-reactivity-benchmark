@@ -4,7 +4,7 @@ import { FrameworkInfo, TestConfig } from "../../util/frameworkTypes";
 import { perfTests } from "../../config";
 import { fastestTest } from "../../util/benchRepeat";
 import { PerfResultCallback } from "../../util/perfLogging";
-import { nextTick } from "../../util/asyncUtil";
+import { collectGarbage, nextTick } from "../../util/asyncUtil";
 
 function percent(n: number): string {
   return Math.round(n * 100) + "%";
@@ -24,8 +24,9 @@ export async function dynamicBench(
   frameworkInfo: FrameworkInfo[],
   logPerfResult: PerfResultCallback,
   testRepeats = 5,
+  configs = perfTests,
 ): Promise<void> {
-  for (const config of perfTests) {
+  for (const config of configs) {
     for (const frameworkTest of frameworkInfo) {
       const { framework } = frameworkTest;
       const { iterations, readFraction } = config;
@@ -50,12 +51,13 @@ export async function dynamicBench(
       });
 
       framework.cleanup();
-      if (globalThis.gc) (gc!(), gc!());
+      collectGarbage();
 
       logPerfResult({
         framework: framework.name,
         test: makeTitle(config) + (config.name ? ` (${config.name})` : ""),
         time: timedResult.time,
+        samples: timedResult.samples,
       });
       verifyBenchResult(frameworkTest, config, timedResult);
     }

@@ -2,6 +2,8 @@ export interface PerfResult {
   framework: string;
   test: string;
   time: number;
+  samples?: number[];
+  measurements?: { name: string; samples: number[] }[];
 }
 
 export interface PerfResultStrings {

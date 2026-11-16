@@ -8,7 +8,8 @@
   "scripts": {
     "tsc": "tsc",
     "test": "vitest",
-    "build": "esbuild src/index.ts --bundle --format=esm --target=esnext --outdir=dist --sourcemap=external && tsc -p tsconfig.json"
+    "build": "esbuild src/index.ts --bundle --format=esm --target=esnext --outdir=dist --sourcemap=external",
+    "test:run": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -18,11 +19,13 @@
     "@angular/core": "21.1.4",
     "@preact/signals": "^2.8.0",
     "@reactively/core": "^0.0.8",
+    "@reatom/core": "^1001.3.0",
     "@solidjs/signals": "^0.10.2",
     "@vue/reactivity": "^3.5.28",
     "alien-signals": "^3.1.2",
     "compostate": "^0.5.1",
     "esbuild": "^0.27.3",
+    "happy-dom": "^21.0.4",
     "mobx": "^6.15.0",
     "mol_wire_lib": "^1.0.1683",
     "oby": "15.1.2",

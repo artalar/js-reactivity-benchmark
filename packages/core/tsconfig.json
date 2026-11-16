@@ -3,7 +3,7 @@
     "strict": true,
     "target": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["./src/frameworks/solid-types.d.ts"],
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
@@ -14,6 +14,7 @@
     "outDir": "./dist",
     "declaration": true,
     "noEmit": false,
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "module": "ESNext"
   }
 }

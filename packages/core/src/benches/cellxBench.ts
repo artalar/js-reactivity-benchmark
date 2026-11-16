@@ -1,5 +1,5 @@
 // The following is an implementation of the cellx benchmark https://github.com/Riim/cellx/blob/master/perf/perf.html
-import { nextTick } from "../util/asyncUtil";
+import { collectGarbage, nextTick } from "../util/asyncUtil";
 import { FrameworkInfo } from "../util/frameworkTypes";
 import { PerfResultCallback } from "../util/perfLogging";
 import { Computed, ReactiveFramework } from "../util/reactiveFramework";
@@ -73,7 +73,7 @@ const cellx = (framework: ReactiveFramework, layers: number) => {
   let result = iter();
 
   framework.cleanup();
-  if (globalThis.gc) (gc!(), gc!());
+  collectGarbage();
 
   return result;
 };
@@ -96,6 +96,7 @@ type BenchmarkResults = [
 export const cellxbench = async (
   frameworkInfo: FrameworkInfo[],
   logPerfResult: PerfResultCallback,
+  selectedLayers = [1000, 2500],
 ) => {
   const expected: Record<number, BenchmarkResults> = {
     1000: [
@@ -133,8 +134,9 @@ export const cellxbench = async (
   for (const { framework } of frameworkInfo) {
     const results: Record<number, BenchmarkResults> = {};
 
-    for (const layers in expected) {
+    for (const layers of selectedLayers) {
       let total = 0;
+      const samples: number[] = [];
       for (let i = 0; i < 10; i++) {
         await nextTick();
 
@@ -143,16 +145,18 @@ export const cellxbench = async (
         results[layers] = [before, after];
 
         total += elapsed;
+        samples.push(elapsed);
       }
 
       logPerfResult({
         framework: framework.name,
         test: `cellx${layers}`,
         time: total,
+        samples,
       });
     }
 
-    for (const layers in expected) {
+    for (const layers of selectedLayers) {
       const [before, after] = results[layers];
       const [expectedBefore, expectedAfter] = expected[layers];
 

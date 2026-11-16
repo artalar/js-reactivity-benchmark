@@ -1,7 +1,6 @@
 // Inspired by https://github.com/solidjs/solid/blob/main/packages/solid/bench/bench.cjs
 
-import { nextTick } from "../util/asyncUtil";
-import { fastestTest } from "../util/benchRepeat";
+import { collectGarbage, nextTick } from "../util/asyncUtil";
 import { PerfResultCallback } from "../util/perfLogging";
 import { Computed, ReactiveFramework, Signal } from "../util/reactiveFramework";
 
@@ -13,43 +12,54 @@ type Reader = () => number;
 export async function sbench(
   framework: ReactiveFramework,
   logPerfResult: PerfResultCallback,
+  test?: string,
 ) {
-  const createSignalsTime = await run(createSignals, COUNT, COUNT);
-  logPerfResult({
-    framework: framework.name,
-    test: "createSignals",
-    time: createSignalsTime,
-  });
+  const measurements: { name: string; samples: number[] }[] = [];
+  if (!test || test === "createSignals") {
+    const time = await run(createSignals, COUNT, COUNT);
+    logPerfResult({
+      framework: framework.name,
+      test: "createSignals",
+      time,
+      measurements: measurements.splice(0),
+    });
+  }
 
-  let createTotal = 0;
-  createTotal += await run(create0to1, COUNT, 0);
-  createTotal += await run(create1to1, COUNT, COUNT);
-  createTotal += await run(create2to1, COUNT / 2, COUNT);
-  createTotal += await run(create4to1, COUNT / 4, COUNT);
-  createTotal += await run(create1000to1, COUNT / 1000, COUNT);
-  createTotal += await run(create1to2, COUNT, COUNT / 2);
-  createTotal += await run(create1to4, COUNT, COUNT / 4);
-  createTotal += await run(create1to8, COUNT, COUNT / 8);
-  createTotal += await run(create1to1000, COUNT, COUNT / 1000);
-  logPerfResult({
-    framework: framework.name,
-    test: "createComputations",
-    time: createTotal,
-  });
+  if (!test || test === "createComputations") {
+    let time = 0;
+    time += await run(create0to1, COUNT, 0);
+    time += await run(create1to1, COUNT, COUNT);
+    time += await run(create2to1, COUNT / 2, COUNT);
+    time += await run(create4to1, COUNT / 4, COUNT);
+    time += await run(create1000to1, COUNT / 1000, COUNT);
+    time += await run(create1to2, COUNT, COUNT / 2);
+    time += await run(create1to4, COUNT, COUNT / 4);
+    time += await run(create1to8, COUNT, COUNT / 8);
+    time += await run(create1to1000, COUNT, COUNT / 1000);
+    logPerfResult({
+      framework: framework.name,
+      test: "createComputations",
+      time,
+      measurements: measurements.splice(0),
+    });
+  }
 
-  let updateTotal = 0;
-  updateTotal += await run(update1to1, COUNT * 4, 1);
-  updateTotal += await run(update2to1, COUNT * 2, 2);
-  updateTotal += await run(update4to1, COUNT, 4);
-  updateTotal += await run(update1000to1, COUNT / 250, 1000);
-  updateTotal += await run(update1to2, COUNT, 1);
-  updateTotal += await run(update1to4, COUNT, 1);
-  updateTotal += await run(update1to1000, COUNT, 1);
-  logPerfResult({
-    framework: framework.name,
-    test: "updateSignals",
-    time: updateTotal,
-  });
+  if (!test || test === "updateSignals") {
+    let time = 0;
+    time += await run(update1to1, COUNT * 4, 1);
+    time += await run(update2to1, COUNT * 2, 2);
+    time += await run(update4to1, COUNT, 4);
+    time += await run(update1000to1, COUNT / 250, 1000);
+    time += await run(update1to2, COUNT, 1);
+    time += await run(update1to4, COUNT, 1);
+    time += await run(update1to1000, COUNT, 1);
+    logPerfResult({
+      framework: framework.name,
+      test: "updateSignals",
+      time,
+      measurements: measurements.splice(0),
+    });
+  }
 
   async function run(
     fn: (n: number, sources: Signal<number>[]) => () => void,
@@ -57,7 +67,7 @@ export async function sbench(
     scount: number,
   ) {
     let sources: Signal<number>[] | null;
-    if (globalThis.gc) (gc!(), gc!());
+    collectGarbage();
     for (let i = 0; i < 3; i++) {
       let warmupUpdate = framework.withBuild(() => {
         // run 3 times to warm up
@@ -71,10 +81,11 @@ export async function sbench(
     framework.cleanup();
 
     // start GC clean
-    if (globalThis.gc) (gc!(), gc!());
+    collectGarbage();
     await nextTick();
 
     let fastestTime = Infinity;
+    const samples: number[] = [];
     for (let i = 0; i < 10; i++) {
       let start = 0;
       let end = 0;
@@ -98,13 +109,15 @@ export async function sbench(
       end = performance.now();
 
       // end GC clean
-      if (globalThis.gc) (gc!(), gc!());
+      collectGarbage();
 
       let time = end - start;
+      samples.push(time);
       if (time < fastestTime) {
         fastestTime = time;
       }
     }
+    measurements.push({ name: fn.name, samples });
     return fastestTime;
   }
 

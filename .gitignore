@@ -4,3 +4,8 @@ dist/
 chrome/
 public/dist/
 isolates-*
+results/
+
+.benchmark-selection.json
+.benchmark-selection.json.*.tmp
+*.cpuprofile

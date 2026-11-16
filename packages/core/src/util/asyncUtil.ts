@@ -4,3 +4,11 @@ export function promiseDelay(timeout = 0): Promise<void> {
 }
 
 export const nextTick = () => promiseDelay(0);
+
+export function collectGarbage(): void {
+  const gc: unknown = Reflect.get(globalThis, "gc");
+  if (typeof gc === "function") {
+    gc();
+    gc();
+  }
+}
